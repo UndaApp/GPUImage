@@ -133,6 +133,9 @@
 - (void)layoutSubviews {
     [super layoutSubviews];
     
+    // Modified for unda - 2014.7.1
+    if (!self.enabled) return;
+    
     // The frame buffer needs to be trashed and re-created when the view size changes.
     if (!CGSizeEqualToSize(self.bounds.size, boundsSizeAtFrameBufferEpoch) &&
         !CGSizeEqualToSize(self.bounds.size, CGSizeZero)) {
