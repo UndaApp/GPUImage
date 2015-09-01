@@ -93,9 +93,17 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     previousFrameTime = kCMTimeNegativeInfinity;
     previousAudioTime = kCMTimeNegativeInfinity;
     inputRotation = kGPUImageNoRotation;
-    
-    _movieWriterContext = [[GPUImageContext alloc] init];
-    [_movieWriterContext useSharegroup:[[[GPUImageContext sharedImageProcessingContext] context] sharegroup]];
+
+    //..
+    //_movieWriterContext = [[GPUImageContext alloc] init];
+    //[_movieWriterContext useSharegroup:[[[GPUImageContext sharedImageProcessingContext] context] sharegroup]];
+    //..
+
+    //..
+    // changed miyoshi for memory leak problem
+    // http://coderissues.com/questions/27857330/memory-leak-occurs-when-use-gpuimagemoviewriter-multiple-times
+    _movieWriterContext = [GPUImageContext sharedImageProcessingContext];
+    //..
 
     runSynchronouslyOnContextQueue(_movieWriterContext, ^{
         [_movieWriterContext useAsCurrentContext];
