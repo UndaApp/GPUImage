@@ -142,8 +142,9 @@
         runSynchronouslyOnVideoProcessingQueue(^{
             [self destroyDisplayFramebuffer];
             [self createDisplayFramebuffer];
-            [self recalculateViewGeometry];
         });
+    } else if (!CGSizeEqualToSize(self.bounds.size, CGSizeZero)) {
+        [self recalculateViewGeometry];
     }
 }
 
@@ -187,9 +188,11 @@
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, displayRenderbuffer);
 	
-    GLuint framebufferCreationStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    __unused GLuint framebufferCreationStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     NSAssert(framebufferCreationStatus == GL_FRAMEBUFFER_COMPLETE, @"Failure with display framebuffer generation for display of size: %f, %f", self.bounds.size.width, self.bounds.size.height);
     boundsSizeAtFrameBufferEpoch = self.bounds.size;
+
+    [self recalculateViewGeometry];
 }
 
 - (void)destroyDisplayFramebuffer;
@@ -340,10 +343,10 @@
     };
     
     static const GLfloat rotateRightHorizontalFlipTextureCoordinates[] = {
-        1.0f, 1.0f,
-        1.0f, 0.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 0.0f,
     };
 
     static const GLfloat rotate180TextureCoordinates[] = {
