@@ -17,19 +17,21 @@ NSString *const kGPUImageChromaKeyFragmentShaderString = SHADER_STRING
  
  void main()
  {
-     vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
-     
-     float maskY = 0.2989 * colorToReplace.r + 0.5866 * colorToReplace.g + 0.1145 * colorToReplace.b;
-     float maskCr = 0.7132 * (colorToReplace.r - maskY);
-     float maskCb = 0.5647 * (colorToReplace.b - maskY);
-     
-     float Y = 0.2989 * textureColor.r + 0.5866 * textureColor.g + 0.1145 * textureColor.b;
-     float Cr = 0.7132 * (textureColor.r - Y);
-     float Cb = 0.5647 * (textureColor.b - Y);
-     
-     //     float blendValue = 1.0 - smoothstep(thresholdSensitivity - smoothing, thresholdSensitivity , abs(Cr - maskCr) + abs(Cb - maskCb));
-     float blendValue = smoothstep(thresholdSensitivity, thresholdSensitivity + smoothing, distance(vec2(Cr, Cb), vec2(maskCr, maskCb)));
+	 vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
+	 
+	 float maskY = 0.2989 * colorToReplace.r + 0.5866 * colorToReplace.g + 0.1145 * colorToReplace.b;
+	 float maskCr = 0.7132 * (colorToReplace.r - maskY);
+	 float maskCb = 0.5647 * (colorToReplace.b - maskY);
+	 
+	 float Y = 0.2989 * textureColor.r + 0.5866 * textureColor.g + 0.1145 * textureColor.b;
+	 float Cr = 0.7132 * (textureColor.r - Y);
+	 float Cb = 0.5647 * (textureColor.b - Y);
+	 
+	 //     float blendValue = 1.0 - smoothstep(thresholdSensitivity - smoothing, thresholdSensitivity , abs(Cr - maskCr) + abs(Cb - maskCb));
+	 float blendValue = smoothstep(thresholdSensitivity, thresholdSensitivity + smoothing, distance(vec2(Cr, Cb), vec2(maskCr, maskCb)));
      gl_FragColor = vec4(textureColor.rgb, textureColor.a * blendValue);
+//	 gl_FragColor = vec4(textureColor.rgb, blendValue);
+//	 gl_FragColor = vec4(textureColor.rgb * blendValue, 1.0 * blendValue);
  }
 );
 #else
@@ -95,18 +97,18 @@ NSString *const kGPUImageChromaKeyFragmentShaderString = SHADER_STRING
     [self setVec3:colorToReplace forUniform:colorToReplaceUniform program:filterProgram];
 }
 
-- (void)setThresholdSensitivity:(GLfloat)newValue;
+- (void)setThresholdSensitivity:(CGFloat)newValue;
 {
     _thresholdSensitivity = newValue;
     
-    [self setFloat:_thresholdSensitivity forUniform:thresholdSensitivityUniform program:filterProgram];
+    [self setFloat:(GLfloat)_thresholdSensitivity forUniform:thresholdSensitivityUniform program:filterProgram];
 }
 
-- (void)setSmoothing:(GLfloat)newValue;
+- (void)setSmoothing:(CGFloat)newValue;
 {
     _smoothing = newValue;
     
-    [self setFloat:_smoothing forUniform:smoothingUniform program:filterProgram];
+    [self setFloat:(GLfloat)_smoothing forUniform:smoothingUniform program:filterProgram];
 }
 
 

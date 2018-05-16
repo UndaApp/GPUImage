@@ -2,13 +2,13 @@
 
 <div style="float: right"><img src="http://sunsetlakesoftware.com/sites/default/files/GPUImageLogo.png" /></div>
 
-<a href="https://zenodo.org/record/10416#.U5YGaF773Md"><img src="https://zenodo.org/badge/doi/10.5281/zenodo.10416.png" /></a>
+<a href="https://zenodo.org/record/10416#.U5YGaF773Md"><img src="https://zenodo.org/badge/doi/10.5281/zenodo.10416.svg" /></a>
 
 Brad Larson
 
 http://www.sunsetlakesoftware.com
 
-[@bradlarson](http://twitter.com/bradlarson)
+[@bradlarson](https://twitter.com/bradlarson)
 
 contact@sunsetlakesoftware.com
 
@@ -52,6 +52,8 @@ For example, an application that takes in live video from the camera, converts t
 
 ## Adding the static library to your iOS project ##
 
+Note: if you want to use this in a Swift project, you need to use the steps in the "Adding this as a framework" section instead of the following. Swift needs modules for third-party code.
+
 Once you have the latest source code for the framework, it's fairly straightforward to add it to your application. Start by dragging the GPUImage.xcodeproj file into your application's Xcode project to embed the framework in your project. Next, go to your application's target and add GPUImage as a Target Dependency. Finally, you'll want to drag the libGPUImage.a library from the GPUImage framework's Products folder to the Link Binary With Libraries build phase in your application's target.
 
 GPUImage needs a few other frameworks to be linked into your application, so you'll need to add the following as linked libraries in your application target:
@@ -74,7 +76,7 @@ Also, if you need to deploy this to iOS 4.x, it appears that the current version
 
 Additionally, this is an ARC-enabled framework, so if you want to use this within a manual reference counted application targeting iOS 4.x, you'll need to add -fobjc-arc to your Other Linker Flags as well.
 
-### Building static library at the command line ###
+### Building a static library at the command line ###
 
 If you don't want to include the project as a dependency in your application's Xcode project, you can build a universal static library for the iOS Simulator or device. To do this, run `build.sh` at the command line. The resulting library and header files will be located at `build/Release-iphone`. You may also change the version of the iOS SDK by changing the `IOSSDK_VER` variable in `build.sh` (all available versions can be found using `xcodebuild -showsdks`).
 
@@ -90,9 +92,11 @@ This should cause GPUImage to build as a framework. Under Xcode 6, this will als
 
 to pull it in.
 
+You then need to add a new Copy Files build phase, set the Destination to Frameworks, and add the GPUImage.framework build product to that. This will allow the framework to be bundled with your application (otherwise, you'll see cryptic "dyld: Library not loaded: @rpath/GPUImage.framework/GPUImage" errors on execution).
+
 ### Documentation ###
 
-Documentation is generated from header comments using appledoc. To build the documentation, switch to the "Documentation" scheme in Xcode. You should ensure that "APPLEDOC_PATH" (a User-Defined build setting) points to an appledoc binary, available on <a href="https://github.com/tomaz/appledoc">Github</a> or through <a href="https://github.com/mxcl/homebrew">Homebrew</a>. It will also build and install a .docset file, which you can view with your favorite documentation tool.
+Documentation is generated from header comments using appledoc. To build the documentation, switch to the "Documentation" scheme in Xcode. You should ensure that "APPLEDOC_PATH" (a User-Defined build setting) points to an appledoc binary, available on <a href="https://github.com/tomaz/appledoc">Github</a> or through <a href="https://github.com/Homebrew/homebrew">Homebrew</a>. It will also build and install a .docset file, which you can view with your favorite documentation tool.
 
 ## Performing common tasks ##
 
@@ -143,13 +147,13 @@ This will give you a live, filtered feed of the still camera's preview video. No
 Once you want to capture a photo, you use a callback block like the following:
 
 	[stillCamera capturePhotoProcessedUpToFilter:filter withCompletionHandler:^(UIImage *processedImage, NSError *error){
-	    NSData *dataForPNGFile = UIImageJPEGRepresentation(processedImage, 0.8);
+	    NSData *dataForJPEGFile = UIImageJPEGRepresentation(processedImage, 0.8);
     
 	    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	    NSString *documentsDirectory = [paths objectAtIndex:0];
     
 	    NSError *error2 = nil;
-	    if (![dataForPNGFile writeToFile:[documentsDirectory stringByAppendingPathComponent:@"FilteredPhoto.jpg"] options:NSAtomicWrite error:&error2])
+	    if (![dataForJPEGFile writeToFile:[documentsDirectory stringByAppendingPathComponent:@"FilteredPhoto.jpg"] options:NSAtomicWrite error:&error2])
 	    {
 	        return;
 	    }
@@ -290,6 +294,13 @@ There are currently 125 built-in filters, divided into the following categories:
 - **GPUImageHueFilter**: Adjusts the hue of an image
   - *hue*: The hue angle, in degrees. 90 degrees by default
 
+- **GPUImageVibranceFilter**: Adjusts the vibrance of an image
+  - *vibrance*: The vibrance adjustment to apply, using 0.0 as the default, and a suggested min/max of around -1.2 and 1.2, respectively.
+
+- **GPUImageWhiteBalanceFilter**: Adjusts the white balance of an image.
+  - *temperature*: The temperature to adjust the image by, in ºK. A value of 4000 is very cool and 7000 very warm. The default value is 5000. Note that the scale between 4000 and 5000 is nearly as visually significant as that between 5000 and 7000.
+  - *tint*: The tint to adjust the image by. A value of -200 is *very* green and 200 is *very* pink. The default value is 0.  
+
 - **GPUImageToneCurveFilter**: Adjusts the colors of an image based on spline curves for each color channel.
   - *redControlPoints*:
   - *greenControlPoints*:
@@ -298,7 +309,13 @@ There are currently 125 built-in filters, divided into the following categories:
 
 - **GPUImageHighlightShadowFilter**: Adjusts the shadows and highlights of an image
   - *shadows*: Increase to lighten shadows, from 0.0 to 1.0, with 0.0 as the default.
-  - *highlights*: Decrease to darken highlights, from 0.0 to 1.0, with 1.0 as the default.
+  - *highlights*: Decrease to darken highlights, from 1.0 to 0.0, with 1.0 as the default.
+
+- **GPUImageHighlightShadowTintFilter**: Allows you to tint the shadows and highlights of an image independently using a color and intensity
+  - *shadowTintColor*: Shadow tint RGB color (GPUVector4). Default: `{1.0f, 0.0f, 0.0f, 1.0f}` (red).
+  - *highlightTintColor*: Highlight tint RGB color (GPUVector4). Default: `{0.0f, 0.0f, 1.0f, 1.0f}` (blue).
+  - *shadowTintIntensity*: Shadow tint intensity, from 0.0 to 1.0. Default: 0.0
+  - *highlightTintIntensity*: Highlight tint intensity, from 0.0 to 1.0, with 0.0 as the default.
 
 - **GPUImageLookupFilter**: Uses an RGB color lookup image to remap the colors in an image. First, use your favourite photo editing application to apply a filter to lookup.png from GPUImage/framework/Resources. For this to work properly each pixel color must not depend on other pixels (e.g. blur will not work). If you need a more complex filter you can create as many lookup tables as required. Once ready, use your new lookup.png file as a second input for GPUImageLookupFilter.
 
@@ -308,6 +325,14 @@ There are currently 125 built-in filters, divided into the following categories:
 
 - **GPUImageSoftEleganceFilter**: Another lookup-based color remapping filter. If you want to use this effect you have to add lookup_soft_elegance_1.png and lookup_soft_elegance_2.png from the GPUImage Resources folder to your application bundle.
 
+- **GPUImageSkinToneFilter**: A skin-tone adjustment filter that affects a unique range of light skin-tone colors and adjusts the pink/green or pink/orange range accordingly. Default values are targetted at fair caucasian skin, but can be adjusted as required.
+  - *skinToneAdjust*: Amount to adjust skin tone. Default: 0.0, suggested min/max: -0.3 and 0.3 respectively.
+  - *skinHue*: Skin hue to be detected. Default: 0.05 (fair caucasian to reddish skin).
+  - *skinHueThreshold*: Amount of variance in skin hue. Default: 40.0.
+  - *maxHueShift*: Maximum amount of hue shifting allowed. Default: 0.25.
+  - *maxSaturationShift* = Maximum amount of saturation to be shifted (when using orange). Default: 0.4.
+  - *upperSkinToneColor* = `GPUImageSkinToneUpperColorGreen` or `GPUImageSkinToneUpperColorOrange`
+    
 - **GPUImageColorInvertFilter**: Inverts the colors of an image
 
 - **GPUImageGrayscaleFilter**: Converts an image to grayscale (a slightly faster implementation of the saturation filter, without the ability to vary the color contribution)
@@ -659,8 +684,10 @@ There are currently 125 built-in filters, divided into the following categories:
   - *refractiveIndex*: The index of refraction for the sphere, with a default of 0.71
 
 - **GPUImageVignetteFilter**: Performs a vignetting effect, fading out the image at the edges
-  - *x*:
-  - *y*: The directional intensity of the vignetting, with a default of x = 0.75, y = 0.5
+  - *vignetteCenter*: The center for the vignette in tex coords (CGPoint), with a default of 0.5, 0.5
+  - *vignetteColor*: The color to use for the vignette (GPUVector3), with a default of black
+  - *vignetteStart*: The normalized distance from the center where the vignette effect starts, with a default of 0.5
+  - *vignetteEnd*: The normalized distance from the center where the vignette effect ends, with a default of 0.75
 
 - **GPUImageKuwaharaFilter**: Kuwahara image abstraction, drawn from the work of Kyprianidis, et. al. in their publication "Anisotropic Kuwahara Filtering on the GPU" within the GPU Pro collection. This produces an oil-painting-like image, but it is extremely computationally expensive, so it can take seconds to render a frame on an iPad 2. This might be best used for still images.
   - *radius*: In integer specifying the number of pixels out from the center pixel to test when applying the filter, with a default of 4. A higher value creates a more abstracted image, but at the cost of much greater processing time.
